@@ -79,6 +79,12 @@ async def drop_db():
 
 
 async def check_formula_exists(materials_hash: str) -> bool:
+    """
+    check if a formula with the given materials_hash exists
+    param materials_hash: SHA-256 hash of the materials list
+    return: Formula object if exists, None otherwise
+    """
+
     async with AsyncSessionLocal() as session:
         query = select(Formula).where(Formula.materials_hash == materials_hash)
         result = await session.execute(query)
@@ -87,6 +93,11 @@ async def check_formula_exists(materials_hash: str) -> bool:
 
 
 async def add_formula(formula, materials_hash: str):
+    """
+    Add a new formula and its materials to the database.
+    param formula: Formulation object
+    param materials_hash: SHA-256 hash of the materials list
+    """
     async with AsyncSessionLocal() as session:
         async with session.begin():
             new_formula = Formula(name=formula.name, materials_hash=materials_hash)

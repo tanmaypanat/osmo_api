@@ -16,6 +16,11 @@ retries = 2  # total attempts = retries + 1
 
 
 def create_hash(materials: list[Material]) -> str:
+    """
+    Create a SHA-256 hash of the normalized materials list.
+    param materials: List of Material objects.
+    return: SHA-256 hash string.
+    """
     normalized = []
 
     for m in materials:
@@ -33,7 +38,17 @@ def create_hash(materials: list[Material]) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-async def publish_and_save(app, formula, materials_hash):
+async def publish_and_save(
+    app: web.Application, formula: Formulation, materials_hash: str
+) -> bool:
+    """
+    Publish the formula to the event queue and save it to the database atomically.
+    param app: The aiohttp application instance.
+    param formula: The Formulation object to be saved.
+    param materials_hash: The SHA-256 hash of the formula's materials.
+    return: True if successful, False otherwise.
+    """
+
     attempt = 0
 
     while attempt <= retries:
@@ -65,7 +80,11 @@ async def publish_and_save(app, formula, materials_hash):
     return False
 
 
-async def handle_create_formula(request):
+async def handle_create_formula(request: web.Request):
+    """
+    Handle POST request to create a new formula.
+    param request: The aiohttp request object.
+    """
     data = await request.json()
     try:
         formula = Formulation(**data)
@@ -103,11 +122,18 @@ async def handle_create_formula(request):
     return web.json_response({"message": "New formula received and added"}, status=201)
 
 
-async def handle_get_formulas(request):
+async def handle_get_formulas(request: web.Request):
+    """
+    Handle GET request to retrieve all formulas.
+    param request: The aiohttp request object.
+    """
     formulas = await get_all_formulas()
     return web.json_response({"formulas": formulas}, status=200)
 
 
 def setup_routes(app):
+    """
+    Setup the application routes.
+    """
     app.router.add_post("/formulas", handle_create_formula)
     app.router.add_get("/formulas", handle_get_formulas)
