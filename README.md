@@ -55,6 +55,12 @@ Repository for osmo take home assignment
 - sqlalchemy for handling data insertion. retrieval from db. This uses the datamodel and table schemas for insertion without writing    sql queries which are prone to typos
 - postgres on docker - containarized example, makes it easier to use this way, user and db creation through docker file without explicit commands.
 
+- Drawbacks
+    - No restart recovery
+    - queue wipe on restart 
+    - Potential race condition if two same formulas check hash at the same time, both will then try to create formula but one will fail later on 
+
+
 ## Duplicate detection strategy 
 ### Client side
 Note - I did not consider client side strategies as I am assuming I do not have control over client requests. I will focus on server side implementation. These just represent potential client side solutions.
@@ -130,3 +136,36 @@ Understand that no one method is best. Idempotency should be handled at client a
     - We do not have a consumer in the application, but if one existed, it can potentially consume the queued message before rollback
         -lock queue until db insert?
     - Retry mechanism - its serves a s proof of concept, in reality we need to know why the db is down and if retrying will help, a 0.1 sec sleep might not be enough
+
+# Production Considerations
+1. Persistent message queue
+- Use a production ready, fault tolerant, persistent and distributed queue
+- kafka, rabbitmq, aws sqs
+
+2. Atomicity strategy
+- Outbox pattern
+- Store event in table at the same time as formula saving, background worker produces it to queue
+- I prefer dbfirst startegy, dbs are resilinet, data is not immutable in most cases
+
+3. Concurrency, duplicate handling
+- client side + server side implementation 
+- Maybe use of redis or bloom filter for faster checking
+
+4. Retry and failure 
+- add exponential backoff
+- smarter retry based on the actual error from db and queue
+
+5. Observability and monitoring 
+- add more logging
+- forward logs to data visualtion platform like kibana which has visualtzation and serach capabilities 
+
+6. Scaling
+- Deploy multiple instances behind load balancer
+- Distributed queue, database and microservices
+
+7. Data validation and security 
+- Rate limiting 
+- circuit breakers
+- authentication headers
+- data integrity using hmac 
+- jwt potentially for timed access
