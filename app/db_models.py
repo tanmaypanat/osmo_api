@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
-
+from sqlalchemy import select
 
 load_dotenv()
 
@@ -67,3 +67,11 @@ async def drop_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     print("All tables dropped")
+
+
+async def check_formula_exists(materials_hash: str) -> bool:
+    async with AsyncSessionLocal() as session:
+        query = select(Formula).where(Formula.materials_hash == materials_hash)
+        result = await session.execute(query)
+        existing_formula = result.scalar_one_or_none()
+        return existing_formula

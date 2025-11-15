@@ -6,8 +6,8 @@ import aiohttp.web as web
 from pydantic import ValidationError
 
 from app.schemas import Formulation, Material
-from app.db_models import AsyncSessionLocal, Formula
-from sqlalchemy import select
+from app.db_models import check_formula_exists
+
 
 _logger = logging.getLogger(__name__)
 
@@ -43,19 +43,17 @@ async def handle_create_formula(request):
         )
 
     materials_hash = create_hash(formula.materials)
-    async with AsyncSessionLocal() as session:
-        query = select(Formula).where(Formula.materials_hash == materials_hash)
-        result = await session.execute(query)
-        existing_formula = result.scalar_one_or_none()
+    print(materials_hash)
+    existing_formula = await check_formula_exists(materials_hash)
     if existing_formula:
+        _logger.info(f"Duplicate formula detected with ID: {existing_formula.id}")
         return web.json_response(
             {
-                "message": "Duplicate formula detected",
-                "formula_id": existing_formula.id,
+                "message": "Formula already exists",
+                "name": existing_formula.name,
             },
-            status=200,
+            status=409,
         )
-    print(materials_hash)
     return web.json_response({"message": "New formula received and added"}, status=201)
 
 
