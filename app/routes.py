@@ -79,8 +79,8 @@ async def handle_create_formula(request):
 
     materials_hash = create_hash(formula.materials)
 
-    existing_formula = await check_formula_exists(materials_hash)
-    if existing_formula:
+    # existing_formula = await check_formula_exists(materials_hash)
+    if existing_formula := await check_formula_exists(materials_hash):
         _logger.info(f"Duplicate formula detected with ID: {existing_formula.id}")
         return web.json_response(
             {
