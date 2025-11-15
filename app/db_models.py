@@ -12,7 +12,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker, selectinload
 
 load_dotenv()
 
@@ -102,3 +102,30 @@ async def add_formula(formula, materials_hash: str):
                 for m in formula.materials
             ]
             session.add_all(material_rows)
+
+
+async def get_all_formulas():
+    """
+    Return all formulas with their materials included.
+    """
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Formula).options(selectinload(Formula.materials))
+        )
+        formulas = result.scalars().all()
+
+        formatted = []
+        for f in formulas:
+            formatted.append(
+                {
+                    "id": f.id,
+                    "name": f.name,
+                    "materials_hash": f.materials_hash,
+                    "materials": [
+                        {"name": m.name, "concentration": m.concentration}
+                        for m in f.materials
+                    ],
+                }
+            )
+
+        return formatted

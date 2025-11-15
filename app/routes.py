@@ -5,7 +5,7 @@ import re
 import aiohttp.web as web
 from pydantic import ValidationError
 
-from app.db_models import add_formula, check_formula_exists
+from app.db_models import add_formula, check_formula_exists, get_all_formulas
 from app.schemas import Formulation, Material
 from app.event_queue import publish, rollback
 import asyncio
@@ -79,8 +79,8 @@ async def handle_create_formula(request):
 
     materials_hash = create_hash(formula.materials)
 
-    # existing_formula = await check_formula_exists(materials_hash)
-    if existing_formula := await check_formula_exists(materials_hash):
+    existing_formula = await check_formula_exists(materials_hash)
+    if existing_formula:
         _logger.info(f"Duplicate formula detected with ID: {existing_formula.id}")
         return web.json_response(
             {
@@ -103,5 +103,11 @@ async def handle_create_formula(request):
     return web.json_response({"message": "New formula received and added"}, status=201)
 
 
+async def handle_get_formulas(request):
+    formulas = await get_all_formulas()
+    return web.json_response({"formulas": formulas}, status=200)
+
+
 def setup_routes(app):
     app.router.add_post("/formulas", handle_create_formula)
+    app.router.add_get("/formulas", handle_get_formulas)
