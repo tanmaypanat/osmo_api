@@ -8,6 +8,6 @@ class Material:
 
 
 @dataclass
-class Formula:
+class Formulation:
     name: str
     materials: list[Material]
