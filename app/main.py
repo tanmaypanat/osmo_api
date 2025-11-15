@@ -18,7 +18,7 @@ async def on_startup(app):
     Handles DB initialization and queue setup.
     """
     _logger.info("Starting up the application")
-    await drop_db()  # for testing purposes, drop existing tables
+    # await drop_db()  # for testing purposes, drop existing tables
     await init_db()
     init_queue(app)
 
