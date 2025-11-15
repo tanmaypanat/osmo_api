@@ -1,6 +1,7 @@
 from aiohttp import web
 from app.routes import setup_routes
 from app.db_models import init_db
+from app.event_queue import init_queue
 import logging
 
 logging.basicConfig(
@@ -10,8 +11,9 @@ _logger = logging.getLogger(__name__)
 
 
 async def on_startup(app):
-    _logger.info("Starting up the application...")
+    _logger.info("Starting up the application")
     await init_db()
+    init_queue(app)
 
 
 async def on_shutdown(app):

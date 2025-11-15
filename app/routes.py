@@ -6,7 +6,7 @@ import aiohttp.web as web
 from pydantic import ValidationError
 
 from app.schemas import Formulation, Material
-from app.db_models import check_formula_exists
+from app.db_models import check_formula_exists, add_formula
 
 
 _logger = logging.getLogger(__name__)
@@ -54,6 +54,7 @@ async def handle_create_formula(request):
             },
             status=409,
         )
+
     return web.json_response({"message": "New formula received and added"}, status=201)
 
 

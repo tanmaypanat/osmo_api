@@ -75,3 +75,21 @@ async def check_formula_exists(materials_hash: str) -> bool:
         result = await session.execute(query)
         existing_formula = result.scalar_one_or_none()
         return existing_formula
+
+
+async def add_formula(formula, materials_hash: str):
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            new_formula = Formula(name=formula.name, materials_hash=materials_hash)
+            session.add(new_formula)
+            await session.flush()  # to get formula id
+
+            material_rows = [
+                FormulaMaterial(
+                    formula_id=new_formula.id,
+                    name=m.name,
+                    concentration=m.concentration,
+                )
+                for m in formula.materials
+            ]
+            session.add_all(material_rows)
