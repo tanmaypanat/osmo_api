@@ -80,7 +80,7 @@ https://www.tencentcloud.com/techpedia/128055
 1. Unique database constraints, database level 
 - If data has unique identifier like order_id , or user with email_id that already exists , database can prevent insertion 
 - Reason for not choosing this by itself
-    -provided data does not have such a unique attribute.
+    - provided data does not have such a unique attribute.
     - Requires some db processing and insert failure to respond back to customer.
 - I will be using this with number 3. for storing unique hashes, but main focus is on creating those unique hashes in 3.
 
@@ -111,5 +111,22 @@ https://www.tencentcloud.com/techpedia/128055
     - changing schema will invalidate older hashes 
         - eg new schema uses conc instead of concentration
         - Do we potentially normalize this too?
-        
+
 Understand that no one method is best. Idempotency should be handled at client and server side. Using uuid in conjunction with hashes and db restrictions adds layers of redundancy for effective data handling.
+
+
+## Atomicity Strategies 
+1. outbox - write message to two tables, actual formula table and outbox table 
+- a background worked then reads from this table to publish onto a queue
+- resource : https://www.shaunakc.com/blogs/the-outbox-pattern
+2. cdc on outbox or db - change data capture 
+- like 'emitting' changes on db, captured by debezium, forwarded to kafka
+- Resource : https://medium.com/@subodh.shetty87/designing-reliable-distributed-systems-transactional-outbox-change-data-capture-cdc-pattern-0461b00cf059
+3. What I used 
+- I chose not to have all the additional overhead which comes with the above two strategies , as they either need additional software tools or additional worker and tables.
+- Our application is straight forward with a single endpoint writing formulas 
+- modern queues like kafka do not allow such rollback deletion but its easy to implement in a simple queue
+- edge cases:
+    - We do not have a consumer in the application, but if one existed, it can potentially consume the queued message before rollback
+        -lock queue until db insert?
+    - Retry mechanism - its serves a s proof of concept, in reality we need to know why the db is down and if retrying will help, a 0.1 sec sleep might not be enough
