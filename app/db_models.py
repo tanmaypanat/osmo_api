@@ -1,9 +1,18 @@
 import os
+
 from dotenv import load_dotenv
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, func
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship
-from sqlalchemy import select
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+    select,
+)
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 load_dotenv()
 

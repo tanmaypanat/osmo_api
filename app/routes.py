@@ -5,9 +5,8 @@ import re
 import aiohttp.web as web
 from pydantic import ValidationError
 
+from app.db_models import add_formula, check_formula_exists
 from app.schemas import Formulation, Material
-from app.db_models import check_formula_exists, add_formula
-
 
 _logger = logging.getLogger(__name__)
 
