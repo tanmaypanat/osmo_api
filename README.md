@@ -3,8 +3,8 @@ Repository for osmo take home assignment
 
 Setup and testing instructions
 - Install docker 
- - This is a simple docker install for ubuntu 24, do this is docker is not already installed
- - sudo apt update
+    - This is a simple docker install for ubuntu 24, do this is docker is not already installed
+    - sudo apt update
  - sudo apt install docker.io
  - sudo usermod -aG docker ${USER}
  - log out then log in session
