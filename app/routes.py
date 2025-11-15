@@ -7,8 +7,12 @@ from pydantic import ValidationError
 
 from app.db_models import add_formula, check_formula_exists
 from app.schemas import Formulation, Material
+from app.event_queue import publish, rollback
+import asyncio
 
 _logger = logging.getLogger(__name__)
+
+retries = 2  # total attempts = retries + 1
 
 
 def create_hash(materials: list[Material]) -> str:
@@ -29,6 +33,38 @@ def create_hash(materials: list[Material]) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+async def publish_and_save(app, formula, materials_hash):
+    attempt = 0
+
+    while attempt <= retries:
+        try:
+            payload = {
+                "name": formula.name,
+                "materials": [
+                    {"name": m.name, "concentration": m.concentration}
+                    for m in formula.materials
+                ],
+                "materials_hash": materials_hash,
+            }
+
+            # publish to queue first
+            await publish(app, payload)
+
+            # then save to DB
+            await add_formula(formula, materials_hash)
+
+            return True
+
+        except Exception as e:
+            _logger.exception(f"Attempt {attempt + 1} failed: {e}")
+            rollback(app, payload)
+            attempt += 1
+            await asyncio.sleep(0.1)  # short delay before retry
+
+    # failed all attempts
+    return False
+
+
 async def handle_create_formula(request):
     data = await request.json()
     try:
@@ -42,7 +78,7 @@ async def handle_create_formula(request):
         )
 
     materials_hash = create_hash(formula.materials)
-    print(materials_hash)
+
     existing_formula = await check_formula_exists(materials_hash)
     if existing_formula:
         _logger.info(f"Duplicate formula detected with ID: {existing_formula.id}")
@@ -52,6 +88,16 @@ async def handle_create_formula(request):
                 "name": existing_formula.name,
             },
             status=409,
+        )
+
+    # attempt to save atomically
+    successfully_saved = await publish_and_save(request.app, formula, materials_hash)
+    if not successfully_saved:
+        return web.json_response(
+            {
+                "error": "Failed to process formula after multiple attempts",
+            },
+            status=500,
         )
 
     return web.json_response({"message": "New formula received and added"}, status=201)
