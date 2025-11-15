@@ -1,0 +1,9 @@
+aiohttp==3.9.5
+pydantic==2.8.2
+python-dotenv==1.0.1
+SQLAlchemy==2.0.31
+asyncpg==0.29.0
+alembic==1.13.2
+pytest==7.4.2
+pytest-aiohttp==1.0.4
+pytest-asyncio==0.22.0
