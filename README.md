@@ -45,4 +45,32 @@ Repository for osmo take home assignment
     - send formulas to see creation or duplication error
     - send incorrect formula schema to see validation error 
 
-- to clear db while starting the application go to the app/main/py and uncomment drop_db in on_startup
+- To clear db while starting the application go to the app/main/py and uncomment drop_db in on_startup
+
+# Design Decisions
+- Idempotency - Json message body hashing with db unique hash store in postgres, redis if time permits implementation. 
+- Atomic operations - I decided to follow a simple solution for atomicity, which includes queue rollback on db write failure and no db write on queue failure, this avoid additional complexity which is used in production like outbox, cdc , db triggers etc
+- pydantic for data validation
+- aiohttp for async server
+- sqlalchemy for handling data insertion. retrieval from db. This uses the datamodel and table schemas for insertion without writing    sql queries which are prone to typos
+- postgres on docker - contanarized example plus makes it easier to use this way, user and db creation through docker file without explicit commands.
+
+## Duplicate detection strategy 
+### client side
+Note - I did not consider client side strategies as I am assuming I do not have control over client requests. I will focus on server side implementation. These just represent potential client side solutions.
+
+1. Client side request uuid :-
+generate unique uuid, send it with header or message body as a identifier for same message.
+Resource  - https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs
+2. Backoff and jitter, with uuid :-
+Realize that retries cause duplicate messages, implement exponential backoff and random jitter.
+Only retry for server side transient errors, not client side or persistent errors
+Use in combination with uuid to implement idempotency while not overwhelming the api 
+Resource -
+https://embedded.gusto.com/blog/defensive-programming-api-clients/
+3. UI based button disable :-
+If client uses ui interface for submitting a request, deactivate button on click until api responds or timesout
+this avoid client clicking the button multiple times 
+Resource 
+https://github.com/microsoft/microsoft-ui-xaml/discussions/9445
+
