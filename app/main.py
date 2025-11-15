@@ -1,8 +1,10 @@
+import logging
+
 from aiohttp import web
-from app.routes import setup_routes
+
 from app.db_models import init_db
 from app.event_queue import init_queue
-import logging
+from app.routes import setup_routes
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

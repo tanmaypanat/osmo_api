@@ -12,7 +12,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker, selectinload
+from sqlalchemy.orm import declarative_base, relationship, selectinload, sessionmaker
 
 load_dotenv()
 
