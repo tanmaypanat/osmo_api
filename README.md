@@ -24,3 +24,5 @@ Setup and testing instructions
 
 - docker compose up -d or docker-compose up -d  // depending on docker version 
 - docker ps // confirms container is up and running 
+
+- server will run on localhost:8080, make sure no other process has that.
