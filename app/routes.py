@@ -91,7 +91,10 @@ async def handle_create_formula(request: web.Request):
     except ValidationError as e:
         return web.json_response(
             {
-                "error": f"Invalid Data: {e}",
+                "success": False,
+                "error": "Validation Error",
+                "message": "Invalid Data Provided",
+                "details": f"{e}",
             },
             status=400,
         )
@@ -103,8 +106,13 @@ async def handle_create_formula(request: web.Request):
         _logger.info(f"Duplicate formula detected with ID: {existing_formula.id}")
         return web.json_response(
             {
+                "success": False,
+                "error": "Duplicate formula",
                 "message": "Formula already exists",
-                "name": existing_formula.name,
+                "details": {
+                    "id": existing_formula.id,
+                    "name": existing_formula.name,
+                },
             },
             status=409,
         )
@@ -114,12 +122,16 @@ async def handle_create_formula(request: web.Request):
     if not successfully_saved:
         return web.json_response(
             {
-                "error": "Failed to process formula after multiple attempts",
+                "success": False,
+                "error": "Processing Error",
+                "message": "Failed to process formula after multiple attempts",
             },
             status=500,
         )
 
-    return web.json_response({"message": "New formula received and added"}, status=201)
+    return web.json_response(
+        {"success": True, "message": "New formula received and added"}, status=201
+    )
 
 
 async def handle_get_formulas(request: web.Request):
@@ -128,7 +140,7 @@ async def handle_get_formulas(request: web.Request):
     param request: The aiohttp request object.
     """
     formulas = await get_all_formulas()
-    return web.json_response({"formulas": formulas}, status=200)
+    return web.json_response({"success": True, "formulas": formulas}, status=200)
 
 
 def setup_routes(app):
