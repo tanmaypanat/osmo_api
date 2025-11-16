@@ -3,14 +3,14 @@ Repository for osmo take home assignment
 
 ## Setup instructions
 - Install docker 
-    - This is a simple docker install for ubuntu 24, do this is docker is not already installed
+    - This is a simple docker install for ubuntu 24, do this if docker is not already installed
     - sudo apt update
     - sudo apt install docker.io
     - sudo usermod -aG docker ${USER}
     - log out then log in session
     - docker run hello-world
 
-- clone repo
+- clone repository
     - git clone https://github.com/tanmaypanat/osmo_api.git
 
 - create python virtual enviroment 
@@ -25,7 +25,7 @@ Repository for osmo take home assignment
 - docker compose up -d or docker-compose up -d  // depending on docker version 
 - docker ps // confirms container is up and running 
 
-- server will run on localhost:8080, make sure no other process has that.
+- server will run on localhost:8080, make sure no other process is using that.
 
 ## Testing instructions 
 - in the activated python env run this command to start server 
@@ -45,10 +45,12 @@ Repository for osmo take home assignment
     - send formulas to see creation or duplication error
     - send incorrect formula schema to see validation error 
 
-- To clear db while starting the application go to the app/main/py and uncomment drop_db in on_startup
+- To clear db while starting the application go to the app/main.py and uncomment drop_db in on_startup
 
 # Design Decisions
-- Idempotency - Json message body hashing with db unique hash store in postgres, redis if time permits implementation. 
+(reasoning explained further)
+
+- Idempotency - message body hashing with db unique field hash store in postgre. 
 - Atomic operations - I decided to follow a simple solution for atomicity, which includes queue rollback on db write failure and no db write on queue failure, this avoids additional complexity which is used in production like outbox, cdc , db triggers etc
 - pydantic for data validation
 - aiohttp for async server
@@ -117,15 +119,16 @@ https://www.tencentcloud.com/techpedia/128055
     - changing schema will invalidate older hashes 
         - eg new schema uses conc instead of concentration
         - Do we potentially normalize this too?
+    - Assumption made that concentration will be float with maximum 3 decimal points.
 
 Understand that no one method is best. Idempotency should be handled at client and server side. Using uuid in conjunction with hashes and db restrictions adds layers of redundancy for effective data handling.
 
 
 ## Atomicity Strategies 
-1. outbox - write message to two tables, actual formula table and outbox table 
+1. Outbox - write message to two tables, actual formula table and outbox table 
 - a background worked then reads from this table to publish onto a queue
 - resource : https://www.shaunakc.com/blogs/the-outbox-pattern
-2. cdc on outbox or db - change data capture 
+2. CDC on outbox or db - change data capture 
 - like 'emitting' changes on db, captured by debezium, forwarded to kafka
 - Resource : https://medium.com/@subodh.shetty87/designing-reliable-distributed-systems-transactional-outbox-change-data-capture-cdc-pattern-0461b00cf059
 3. What I used 
@@ -135,7 +138,7 @@ Understand that no one method is best. Idempotency should be handled at client a
 - edge cases:
     - We do not have a consumer in the application, but if one existed, it can potentially consume the queued message before rollback
         -lock queue until db insert?
-    - Retry mechanism - its serves a s proof of concept, in reality we need to know why the db is down and if retrying will help, a 0.1 sec sleep might not be enough
+    - Retry mechanism - its serves as a proof of concept, in reality we need to know why the db is down and if retrying will help, a 0.1 sec sleep might not be enough
 
 # Production Considerations
 1. Persistent message queue
@@ -145,7 +148,7 @@ Understand that no one method is best. Idempotency should be handled at client a
 2. Atomicity strategy
 - Outbox pattern
 - Store event in table at the same time as formula saving, background worker produces it to queue
-- I prefer dbfirst startegy, dbs are resilinet, data is not immutable in most cases
+- I prefer a db first startegy, dbs are resilinet, data is not immutable in most cases
 
 3. Concurrency, duplicate handling
 - client side + server side implementation 
