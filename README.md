@@ -123,6 +123,12 @@ https://www.tencentcloud.com/techpedia/128055
 
 Understand that no one method is best. Idempotency should be handled at client and server side. Using uuid in conjunction with hashes and db restrictions adds layers of redundancy for effective data handling.
 
+### Why just the materials and not the name 
+- Only the materials part of the data should be used for de duplication
+- as explained above, if we get a new message which has a different name, summer breeze vs summer delight, we will NOT create a new   entry for summer delight if the formula is the same as summer breeze. 
+- What makes a scent unique is the chemical makes up of the scent and not the name 
+- names can be reused or changed
+
 
 ## Atomicity Strategies 
 1. Outbox - write message to two tables, actual formula table and outbox table 
