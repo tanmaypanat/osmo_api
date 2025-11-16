@@ -47,6 +47,8 @@ Repository for osmo take home assignment
 
 - To clear db while starting the application go to the app/main.py and uncomment drop_db in on_startup
 
+- for running unit tests, simply run pytest -v from osmo_api folder it should collect and run multiple tests
+
 # Design Decisions
 (reasoning explained further)
 
